@@ -11,10 +11,12 @@ import {
   Pencil,
   Plus,
   Search,
+  SlidersHorizontal,
   Trash2,
   Upload,
   WalletCards,
   X,
+  AlertTriangle,
 } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 import { Logo } from "./Logo";
@@ -151,10 +153,14 @@ export function Dashboard({ user }: { user: User }) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [editId, setEditId] = useState<string | null>(null);
+  const [formOpen, setFormOpen] = useState(false);
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Transaction | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [importing, setImporting] = useState(false);
-  const [message, setMessage] = useState("");
+  const [toast, setToast] = useState("");
 
   const [typeFilter, setTypeFilter] = useState<"all" | "income" | "expense">("all");
   const [fromDate, setFromDate] = useState("");
@@ -173,6 +179,20 @@ export function Dashboard({ user }: { user: User }) {
     timeTo: "",
     search: "",
   });
+
+  useEffect(() => {
+    const open = formOpen || filterOpen || Boolean(deleteTarget);
+    document.body.style.overflow = open ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [formOpen, filterOpen, deleteTarget]);
+
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(""), 2500);
+    return () => clearTimeout(t);
+  }, [toast]);
 
   const fetchTransactions = async (filters = applied) => {
     setLoading(true);
@@ -222,6 +242,7 @@ export function Dashboard({ user }: { user: User }) {
       search,
     };
     setApplied(next);
+    setFilterOpen(false);
     await fetchTransactions(next);
   };
 
@@ -243,8 +264,18 @@ export function Dashboard({ user }: { user: User }) {
       search: "",
     };
     setApplied(next);
+    setFilterOpen(false);
     await fetchTransactions(next);
   };
+
+  const hasActiveFilters =
+    applied.typeFilter !== "all" ||
+    Boolean(applied.fromDate) ||
+    Boolean(applied.toDate) ||
+    applied.dayFilter !== "all" ||
+    Boolean(applied.timeFrom) ||
+    Boolean(applied.timeTo) ||
+    Boolean(applied.search.trim());
 
   const filtered = useMemo(() => {
     return transactions.filter((t) => {
@@ -276,9 +307,16 @@ export function Dashboard({ user }: { user: User }) {
     return { income, expense, balance: income - expense, count: filtered.length };
   }, [filtered]);
 
-  const resetForm = () => {
+  const closeForm = () => {
+    setFormOpen(false);
     setForm(emptyForm());
     setEditId(null);
+  };
+
+  const openAdd = () => {
+    setEditId(null);
+    setForm(emptyForm());
+    setFormOpen(true);
   };
 
   const startEdit = (t: Transaction) => {
@@ -290,13 +328,11 @@ export function Dashboard({ user }: { user: User }) {
       note: t.note || "",
       date: toDatetimeLocal(new Date(t.date)),
     });
-    setMessage("");
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    setFormOpen(true);
   };
 
   const saveEntry = async (e: React.FormEvent) => {
     e.preventDefault();
-    setMessage("");
     setSaving(true);
 
     try {
@@ -314,28 +350,35 @@ export function Dashboard({ user }: { user: User }) {
         setTransactions((prev) =>
           prev.map((t) => (t._id === editId ? data.transaction : t))
         );
-        setMessage("Entry updated.");
+        setToast("Entry updated successfully");
       } else {
         setTransactions((prev) => [data.transaction, ...prev]);
-        setMessage("Entry saved.");
+        setToast("Entry saved successfully");
       }
-      resetForm();
+      closeForm();
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : "Could not save entry");
+      setToast(err instanceof Error ? err.message : "Could not save entry");
     } finally {
       setSaving(false);
     }
   };
 
-  const deleteEntry = async (id: string) => {
-    if (!confirm("Delete this entry?")) return;
-    const res = await fetch(`/api/transactions/${id}`, {
-      method: "DELETE",
-      credentials: "include",
-    });
-    if (res.ok) {
-      setTransactions((prev) => prev.filter((t) => t._id !== id));
-      if (editId === id) resetForm();
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/transactions/${deleteTarget._id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (res.ok) {
+        setTransactions((prev) => prev.filter((t) => t._id !== deleteTarget._id));
+        if (editId === deleteTarget._id) closeForm();
+        setToast("Entry deleted");
+      }
+      setDeleteTarget(null);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -376,7 +419,6 @@ export function Dashboard({ user }: { user: User }) {
 
   const importCsv = async (file: File) => {
     setImporting(true);
-    setMessage("");
     try {
       const text = await file.text();
       const entries = parseCsv(text);
@@ -391,10 +433,10 @@ export function Dashboard({ user }: { user: User }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Import failed");
 
-      setMessage(`${data.imported} entries imported.`);
+      setToast(`${data.imported} entries imported`);
       await fetchTransactions();
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : "Import failed");
+      setToast(err instanceof Error ? err.message : "Import failed");
     } finally {
       setImporting(false);
       if (fileRef.current) fileRef.current.value = "";
@@ -412,18 +454,37 @@ export function Dashboard({ user }: { user: User }) {
       <div className="mx-auto max-w-2xl space-y-5 animate-fade-up">
         <header className="card-panel relative overflow-hidden p-5">
           <div className="absolute -right-8 -top-10 h-28 w-28 rounded-full bg-brand/15 blur-2xl" />
-          <div className="relative flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <Logo size={44} />
-              <div>
-                <h1 className="text-lg font-extrabold tracking-tight">Payment Ledger</h1>
-                <p className="text-sm text-muted">Welcome back, {user.name}</p>
+          <div className="relative space-y-4">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <Logo size={44} />
+                <div>
+                  <h1 className="text-lg font-extrabold tracking-tight">Payment Ledger</h1>
+                  <p className="text-sm text-muted">Welcome back, {user.name}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <ThemeToggle />
+                <button onClick={logout} className="btn-ghost !px-3" aria-label="Logout">
+                  <LogOut className="h-4 w-4" />
+                </button>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <ThemeToggle />
-              <button onClick={logout} className="btn-ghost !px-3" aria-label="Logout">
-                <LogOut className="h-4 w-4" />
+
+            <div className="grid grid-cols-2 gap-2">
+              <button onClick={openAdd} className="btn-brand !py-3.5 text-base shadow-glow">
+                <Plus className="h-5 w-5" />
+                Add Entry
+              </button>
+              <button
+                onClick={() => setFilterOpen(true)}
+                className="btn-ghost !py-3.5 text-base relative"
+              >
+                <SlidersHorizontal className="h-5 w-5" />
+                Filter
+                {hasActiveFilters && (
+                  <span className="absolute right-3 top-3 h-2.5 w-2.5 rounded-full bg-brand" />
+                )}
               </button>
             </div>
           </div>
@@ -473,182 +534,29 @@ export function Dashboard({ user }: { user: User }) {
           />
         </div>
 
-        <form onSubmit={saveEntry} className="card-panel space-y-4 p-5">
-          <div className="flex items-start justify-between gap-3">
+        <section className="card-panel overflow-hidden">
+          <div className="flex items-center justify-between gap-3 border-b px-4 py-4 sm:px-5">
             <div>
-              <h2 className="text-xl font-extrabold text-brand">
-                {editId ? "Edit entry" : "Add entry"}
-              </h2>
-              <p className="mt-1 text-sm text-muted">
-                {editId ? "Fix mistakes and update this entry." : "Only you can see your private ledger."}
+              <h2 className="text-xl font-extrabold text-brand">Your entries</h2>
+              <p className="mt-0.5 text-xs text-muted">
+                {hasActiveFilters ? "Filtered results" : "All your payments"} • {stats.count} shown
               </p>
             </div>
-            {editId && (
-              <button type="button" onClick={resetForm} className="btn-ghost !px-3">
-                <X className="h-4 w-4" />
-                Cancel
-              </button>
-            )}
-          </div>
-
-          <div className="grid grid-cols-2 rounded-2xl bg-bg p-1">
-            {(["income", "expense"] as const).map((type) => (
+            <div className="flex items-center gap-2">
+              {hasActiveFilters && (
+                <button
+                  onClick={showAllEntries}
+                  className="text-xs font-semibold text-muted hover:text-brand"
+                >
+                  Clear
+                </button>
+              )}
               <button
-                key={type}
-                type="button"
-                onClick={() => setForm((prev) => ({ ...prev, type }))}
-                className={`rounded-xl px-4 py-2.5 text-sm font-bold transition ${
-                  form.type === type
-                    ? type === "income"
-                      ? "bg-income text-white shadow-soft"
-                      : "bg-expense text-white shadow-soft"
-                    : "text-muted"
-                }`}
+                onClick={() => setFilterOpen(true)}
+                className="btn-ghost !rounded-xl !px-3 !py-2 text-xs"
               >
-                {type === "income" ? "Income" : "Expense"}
-              </button>
-            ))}
-          </div>
-
-          <label className="block">
-            <span className="mb-1.5 block text-sm font-semibold">Amount</span>
-            <input
-              className="input"
-              type="number"
-              min="1"
-              step="0.01"
-              value={form.amount}
-              onChange={(e) => setForm({ ...form, amount: e.target.value })}
-              placeholder="0"
-              required
-            />
-          </label>
-
-          <label className="block">
-            <span className="mb-1.5 block text-sm font-semibold">Title</span>
-            <input
-              className="input"
-              value={form.source}
-              onChange={(e) => setForm({ ...form, source: e.target.value })}
-              placeholder="e.g. Salary, Rent, Gift"
-              required
-            />
-          </label>
-
-          <label className="block">
-            <span className="mb-1.5 block text-sm font-semibold">Date & Time</span>
-            <input
-              className="input"
-              type="datetime-local"
-              value={form.date}
-              onChange={(e) => setForm({ ...form, date: e.target.value })}
-              required
-            />
-          </label>
-
-          <label className="block">
-            <span className="mb-1.5 block text-sm font-semibold">Note (optional)</span>
-            <input
-              className="input"
-              value={form.note}
-              onChange={(e) => setForm({ ...form, note: e.target.value })}
-              placeholder="Any detail..."
-            />
-          </label>
-
-          {message && <p className="text-sm font-semibold text-brand">{message}</p>}
-
-          <button className="btn-brand w-full !py-3.5" disabled={saving}>
-            {saving ? <Loader2 className="h-5 w-5 animate-spin" /> : editId ? <Pencil className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
-            {editId ? "Update entry" : "Save entry"}
-          </button>
-        </form>
-
-        <section className="card-panel overflow-hidden">
-          <div className="space-y-3 border-b px-4 py-4 sm:px-5">
-            <div className="flex items-center justify-between gap-3">
-              <h2 className="text-xl font-extrabold text-brand">Your entries</h2>
-              <button onClick={showAllEntries} className="text-xs font-semibold text-muted hover:text-brand">
-                Clear filters
-              </button>
-            </div>
-
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
-              <input
-                className="input pl-9"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search title or note..."
-              />
-            </div>
-
-            <div className="grid gap-2 sm:grid-cols-2">
-              <select
-                className="input"
-                value={typeFilter}
-                onChange={(e) => setTypeFilter(e.target.value as typeof typeFilter)}
-              >
-                <option value="all">All types</option>
-                <option value="income">Payment Received</option>
-                <option value="expense">Payment Sent</option>
-              </select>
-              <select
-                className="input"
-                value={dayFilter}
-                onChange={(e) => setDayFilter(e.target.value)}
-              >
-                {DAY_OPTIONS.map((d) => (
-                  <option key={d.value} value={d.value}>
-                    {d.label}
-                  </option>
-                ))}
-              </select>
-              <label className="block">
-                <span className="mb-1 block text-xs font-semibold text-muted">From date</span>
-                <input
-                  className="input"
-                  type="date"
-                  value={fromDate}
-                  onChange={(e) => setFromDate(e.target.value)}
-                />
-              </label>
-              <label className="block">
-                <span className="mb-1 block text-xs font-semibold text-muted">To date</span>
-                <input
-                  className="input"
-                  type="date"
-                  value={toDate}
-                  onChange={(e) => setToDate(e.target.value)}
-                />
-              </label>
-              <label className="block">
-                <span className="mb-1 block text-xs font-semibold text-muted">From time</span>
-                <input
-                  className="input"
-                  type="time"
-                  value={timeFrom}
-                  onChange={(e) => setTimeFrom(e.target.value)}
-                />
-              </label>
-              <label className="block">
-                <span className="mb-1 block text-xs font-semibold text-muted">To time</span>
-                <input
-                  className="input"
-                  type="time"
-                  value={timeTo}
-                  onChange={(e) => setTimeTo(e.target.value)}
-                />
-              </label>
-            </div>
-
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <button onClick={applyFilters} className="btn-brand flex-1 !py-3" disabled={loading}>
-                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
-                Apply Filter
-              </button>
-              <button onClick={showAllEntries} className="btn-ghost flex-1 !py-3" disabled={loading}>
-                Show All
+                <SlidersHorizontal className="h-3.5 w-3.5" />
+                Filter
               </button>
             </div>
           </div>
@@ -660,18 +568,25 @@ export function Dashboard({ user }: { user: User }) {
           ) : filtered.length === 0 ? (
             <div className="px-5 py-12 text-center">
               <WalletCards className="mx-auto mb-3 h-8 w-8 text-brand/50" />
-              <p className="font-bold">No entries found</p>
-              <p className="mt-1 text-sm text-muted">Try another filter or add a new entry.</p>
+              <p className="font-bold">No entries yet</p>
+              <p className="mt-1 text-sm text-muted">Tap Add Entry above to create your first one.</p>
+              <button onClick={openAdd} className="btn-brand mt-4 mx-auto">
+                <Plus className="h-4 w-4" />
+                Add Entry
+              </button>
             </div>
           ) : (
-            <div className="divide-y">
+            <div className="space-y-3 p-4 sm:p-5">
               {filtered.map((t) => {
                 const isIncome = t.type === "income";
                 return (
-                  <article key={t._id} className="px-4 py-4 transition hover:bg-surface/50 sm:px-5">
+                  <article
+                    key={t._id}
+                    className="rounded-2xl border border-border/80 bg-surface/70 p-4 shadow-soft transition hover:-translate-y-0.5 hover:shadow-glow"
+                  >
                     <div className="flex items-start gap-3">
                       <div
-                        className={`grid h-11 w-11 shrink-0 place-items-center rounded-2xl ${
+                        className={`grid h-12 w-12 shrink-0 place-items-center rounded-2xl ${
                           isIncome ? "bg-income/12 text-income" : "bg-expense/12 text-expense"
                         }`}
                       >
@@ -704,7 +619,7 @@ export function Dashboard({ user }: { user: User }) {
                             ) : null}
                           </div>
                           <p
-                            className={`shrink-0 text-base font-extrabold ${
+                            className={`shrink-0 text-lg font-extrabold ${
                               isIncome ? "text-income" : "text-expense"
                             }`}
                           >
@@ -713,7 +628,7 @@ export function Dashboard({ user }: { user: User }) {
                           </p>
                         </div>
 
-                        <div className="mt-3 grid gap-1 rounded-xl bg-bg/80 px-3 py-2 text-xs text-muted sm:grid-cols-2">
+                        <div className="mt-3 grid gap-1.5 rounded-xl bg-bg/90 px-3 py-2.5 text-xs text-muted sm:grid-cols-2">
                           <p>
                             <span className="font-semibold text-fg/70">Payment:</span>{" "}
                             {formatDate(t.date)} • {formatTime(t.date)}
@@ -731,14 +646,14 @@ export function Dashboard({ user }: { user: User }) {
                         <div className="mt-3 flex gap-2">
                           <button
                             onClick={() => startEdit(t)}
-                            className="btn-ghost !px-3 !py-2 text-xs"
+                            className="btn-ghost !rounded-xl !px-3 !py-2 text-xs"
                           >
                             <Pencil className="h-3.5 w-3.5" />
                             Edit
                           </button>
                           <button
-                            onClick={() => deleteEntry(t._id)}
-                            className="btn-ghost !px-3 !py-2 text-xs hover:!border-expense/40 hover:!text-expense"
+                            onClick={() => setDeleteTarget(t)}
+                            className="btn-ghost !rounded-xl !px-3 !py-2 text-xs hover:!border-expense/40 hover:!bg-expense/10 hover:!text-expense"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                             Delete
@@ -752,11 +667,290 @@ export function Dashboard({ user }: { user: User }) {
             </div>
           )}
         </section>
-
-        <p className="px-1 pb-2 text-center text-[11px] text-muted">
-          CSV format: Type, Amount, Title, Note, Payment Date
-        </p>
       </div>
+
+      {toast && (
+        <div className="fixed bottom-6 left-1/2 z-[70] -translate-x-1/2 animate-fade-up rounded-2xl bg-fg px-4 py-3 text-sm font-semibold text-bg shadow-glow">
+          {toast}
+        </div>
+      )}
+
+      {filterOpen && (
+        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/45 p-3 backdrop-blur-sm sm:items-center">
+          <div className="absolute inset-0" onClick={() => setFilterOpen(false)} aria-hidden />
+          <div className="relative z-10 max-h-[92vh] w-full max-w-md animate-scale-in overflow-y-auto rounded-[1.6rem] border border-border bg-card p-5 shadow-glow">
+            <div className="mb-4 flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-xl font-extrabold text-brand">Filter entries</h2>
+                <p className="mt-1 text-sm text-muted">
+                  Choose date, day, time or type to find payments.
+                </p>
+              </div>
+              <button
+                onClick={() => setFilterOpen(false)}
+                className="btn-ghost !rounded-full !p-2"
+                aria-label="Close"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <label className="block">
+                <span className="mb-1.5 block text-sm font-semibold">Search</span>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+                  <input
+                    className="input pl-9"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Title or note..."
+                  />
+                </div>
+              </label>
+
+              <label className="block">
+                <span className="mb-1.5 block text-sm font-semibold">Type</span>
+                <select
+                  className="input"
+                  value={typeFilter}
+                  onChange={(e) => setTypeFilter(e.target.value as typeof typeFilter)}
+                >
+                  <option value="all">All types</option>
+                  <option value="income">Payment Received</option>
+                  <option value="expense">Payment Sent</option>
+                </select>
+              </label>
+
+              <label className="block">
+                <span className="mb-1.5 block text-sm font-semibold">Day</span>
+                <select
+                  className="input"
+                  value={dayFilter}
+                  onChange={(e) => setDayFilter(e.target.value)}
+                >
+                  {DAY_OPTIONS.map((d) => (
+                    <option key={d.value} value={d.value}>
+                      {d.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <div className="grid grid-cols-2 gap-3">
+                <label className="block">
+                  <span className="mb-1.5 block text-sm font-semibold">From date</span>
+                  <input
+                    className="input"
+                    type="date"
+                    value={fromDate}
+                    onChange={(e) => setFromDate(e.target.value)}
+                  />
+                </label>
+                <label className="block">
+                  <span className="mb-1.5 block text-sm font-semibold">To date</span>
+                  <input
+                    className="input"
+                    type="date"
+                    value={toDate}
+                    onChange={(e) => setToDate(e.target.value)}
+                  />
+                </label>
+                <label className="block">
+                  <span className="mb-1.5 block text-sm font-semibold">From time</span>
+                  <input
+                    className="input"
+                    type="time"
+                    value={timeFrom}
+                    onChange={(e) => setTimeFrom(e.target.value)}
+                  />
+                </label>
+                <label className="block">
+                  <span className="mb-1.5 block text-sm font-semibold">To time</span>
+                  <input
+                    className="input"
+                    type="time"
+                    value={timeTo}
+                    onChange={(e) => setTimeTo(e.target.value)}
+                  />
+                </label>
+              </div>
+
+              <div className="flex gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={showAllEntries}
+                  className="btn-ghost flex-1 !py-3"
+                  disabled={loading}
+                >
+                  Show All
+                </button>
+                <button
+                  type="button"
+                  onClick={applyFilters}
+                  className="btn-brand flex-1 !py-3"
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  ) : (
+                    <Search className="h-5 w-5" />
+                  )}
+                  Apply Filter
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {formOpen && (
+        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/45 p-3 backdrop-blur-sm sm:items-center">
+          <div
+            className="absolute inset-0"
+            onClick={closeForm}
+            aria-hidden
+          />
+          <div className="relative z-10 max-h-[92vh] w-full max-w-md animate-scale-in overflow-y-auto rounded-[1.6rem] border border-border bg-card p-5 shadow-glow">
+            <div className="mb-4 flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-xl font-extrabold text-brand">
+                  {editId ? "Edit entry" : "Add entry"}
+                </h2>
+                <p className="mt-1 text-sm text-muted">
+                  {editId ? "Update your payment details." : "Fill details and save your payment."}
+                </p>
+              </div>
+              <button onClick={closeForm} className="btn-ghost !rounded-full !p-2" aria-label="Close">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <form onSubmit={saveEntry} className="space-y-4">
+              <div className="grid grid-cols-2 rounded-2xl bg-bg p-1">
+                {(["income", "expense"] as const).map((type) => (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() => setForm((prev) => ({ ...prev, type }))}
+                    className={`rounded-xl px-4 py-2.5 text-sm font-bold transition ${
+                      form.type === type
+                        ? type === "income"
+                          ? "bg-income text-white shadow-soft"
+                          : "bg-expense text-white shadow-soft"
+                        : "text-muted"
+                    }`}
+                  >
+                    {type === "income" ? "Income" : "Expense"}
+                  </button>
+                ))}
+              </div>
+
+              <label className="block">
+                <span className="mb-1.5 block text-sm font-semibold">Amount</span>
+                <input
+                  className="input"
+                  type="number"
+                  min="1"
+                  step="0.01"
+                  value={form.amount}
+                  onChange={(e) => setForm({ ...form, amount: e.target.value })}
+                  placeholder="0"
+                  required
+                  autoFocus
+                />
+              </label>
+
+              <label className="block">
+                <span className="mb-1.5 block text-sm font-semibold">Title</span>
+                <input
+                  className="input"
+                  value={form.source}
+                  onChange={(e) => setForm({ ...form, source: e.target.value })}
+                  placeholder="e.g. Salary, Rent, Gift"
+                  required
+                />
+              </label>
+
+              <label className="block">
+                <span className="mb-1.5 block text-sm font-semibold">Date & Time</span>
+                <input
+                  className="input"
+                  type="datetime-local"
+                  value={form.date}
+                  onChange={(e) => setForm({ ...form, date: e.target.value })}
+                  required
+                />
+              </label>
+
+              <label className="block">
+                <span className="mb-1.5 block text-sm font-semibold">Note (optional)</span>
+                <input
+                  className="input"
+                  value={form.note}
+                  onChange={(e) => setForm({ ...form, note: e.target.value })}
+                  placeholder="Any detail..."
+                />
+              </label>
+
+              <div className="flex gap-2 pt-1">
+                <button type="button" onClick={closeForm} className="btn-ghost flex-1 !py-3">
+                  Cancel
+                </button>
+                <button className="btn-brand flex-1 !py-3" disabled={saving}>
+                  {saving ? (
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  ) : editId ? (
+                    <Pencil className="h-5 w-5" />
+                  ) : (
+                    <Plus className="h-5 w-5" />
+                  )}
+                  {editId ? "Update" : "Save"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {deleteTarget && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/45 p-4 backdrop-blur-sm">
+          <div className="absolute inset-0" onClick={() => setDeleteTarget(null)} aria-hidden />
+          <div className="relative z-10 w-full max-w-sm animate-scale-in rounded-[1.6rem] border border-border bg-card p-6 text-center shadow-glow">
+            <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-expense/12 text-expense">
+              <AlertTriangle className="h-7 w-7" />
+            </div>
+            <h3 className="text-xl font-extrabold">Delete this entry?</h3>
+            <p className="mt-2 text-sm text-muted">
+              <span className="font-semibold text-fg">{deleteTarget.source}</span>
+              {" • "}
+              {formatMoney(deleteTarget.amount)}
+            </p>
+            <p className="mt-1 text-xs text-muted">This action cannot be undone.</p>
+
+            <div className="mt-6 flex gap-2">
+              <button
+                onClick={() => setDeleteTarget(null)}
+                className="btn-ghost flex-1 !py-3"
+                disabled={deleting}
+              >
+                Keep it
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="btn flex-1 !py-3 !text-white"
+                style={{
+                  backgroundImage: "linear-gradient(135deg, rgb(225 74 90), rgb(190 40 70))",
+                }}
+                disabled={deleting}
+              >
+                {deleting ? <Loader2 className="h-5 w-5 animate-spin" /> : <Trash2 className="h-5 w-5" />}
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
