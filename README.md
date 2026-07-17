@@ -1,31 +1,38 @@
 # Payment Ledger — Frontend
 
-Next.js frontend (PWA) for payment entry.
+Next.js PWA for income/expense payment entry.
 
-## Backend
+## Live Backend
 
-Backend is in a separate repository:
-[https://github.com/faizankhalid1234/backend-repo](https://github.com/faizankhalid1234/backend-repo)
+`https://backend-repo-tawny.vercel.app`
 
-## Setup
+## Local Setup
 
 ```bash
-cd frontend
-cp .env.example .env.local
 npm install
+cp .env.example .env.local
 npm run dev
 ```
 
-Set `BACKEND_URL` in `.env.local` to your backend API URL (default `http://localhost:5000`).
+Open [http://localhost:3000](http://localhost:3000)
 
-App: [http://localhost:3000](http://localhost:3000)
+## Vercel
+
+1. Import this repo
+2. Framework: **Next.js** (root directory = `.`)
+3. Add env:
+   - `BACKEND_URL` = `https://backend-repo-tawny.vercel.app`
+
+On the backend Vercel project, set:
+- `FRONTEND_URL` = your frontend Vercel URL (e.g. `https://payment-xxx.vercel.app`)
+- `MONGODB_URI`
+- `JWT_SECRET`
 
 ## Features
 
-- Login / Register (secure password auth)
-- Income & expense entries
-- Edit / delete entries
-- Import & export CSV
-- Filters (date, day, time, type, search)
-- Light / dark theme
-- Installable PWA
+- Login / Register
+- Add / Edit / Delete entries
+- Import / Export CSV
+- Filters (date, day, time, type)
+- Light / Dark theme
+- PWA

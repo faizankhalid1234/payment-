@@ -2,11 +2,16 @@
 const nextConfig = {
   reactStrictMode: true,
   async rewrites() {
-    const backend = process.env.BACKEND_URL || "http://localhost:5000";
+    const backend =
+      process.env.BACKEND_URL ||
+      (process.env.VERCEL
+        ? "https://backend-repo-tawny.vercel.app"
+        : "http://localhost:5000");
+
     return [
       {
         source: "/api/:path*",
-        destination: `${backend}/api/:path*`,
+        destination: `${backend.replace(/\/$/, "")}/api/:path*`,
       },
     ];
   },
