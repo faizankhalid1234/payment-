@@ -22,14 +22,15 @@ module.exports = {
         expense: "rgb(var(--expense) / <alpha-value>)",
       },
       boxShadow: {
-        soft: "0 10px 30px -12px rgb(0 0 0 / 0.25)",
-        glow: "0 0 40px -10px rgb(var(--brand) / 0.45)",
+        soft: "0 14px 36px -16px rgb(15 118 110 / 0.28)",
+        glow: "0 0 40px -10px rgb(var(--brand) / 0.42)",
       },
       borderRadius: {
         xl2: "1.25rem",
       },
       fontFamily: {
-        sans: ["Inter", "system-ui", "sans-serif"],
+        sans: ["Plus Jakarta Sans", "system-ui", "sans-serif"],
+        display: ["Plus Jakarta Sans", "system-ui", "sans-serif"],
       },
       keyframes: {
         "fade-up": {

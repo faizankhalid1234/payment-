@@ -1,29 +1,13 @@
-# PaisaBook — Payment Entry PWA
+# Payment Ledger — Frontend
 
-Split into separate **frontend** and **backend** folders.
+Next.js frontend (PWA) for payment entry.
 
-## Structure
+## Backend
 
-```
-payment-/
-??? frontend/   # Next.js UI + PWA
-??? backend/    # Node.js (Express) API + MongoDB
-```
+Backend is in a separate repository:
+[https://github.com/faizankhalid1234/backend-repo](https://github.com/faizankhalid1234/backend-repo)
 
 ## Setup
-
-### 1. Backend
-
-```bash
-cd backend
-cp .env.example .env
-npm install
-npm run dev
-```
-
-API runs on [http://localhost:5000](http://localhost:5000)
-
-### 2. Frontend
 
 ```bash
 cd frontend
@@ -32,31 +16,16 @@ npm install
 npm run dev
 ```
 
-App runs on [http://localhost:3000](http://localhost:3000)
+Set `BACKEND_URL` in `.env.local` to your backend API URL (default `http://localhost:5000`).
 
-Frontend proxies `/api/*` to the backend (`BACKEND_URL`).
+App: [http://localhost:3000](http://localhost:3000)
 
 ## Features
 
-- Register / Login (JWT cookie auth)
-- Income and expense entries
-- Source, category, note, date + time
-- Dashboard totals + cashflow chart
-- Search / filter / CSV export
-- Light + Dark theme
+- Login / Register (secure password auth)
+- Income & expense entries
+- Edit / delete entries
+- Import & export CSV
+- Filters (date, day, time, type, search)
+- Light / dark theme
 - Installable PWA
-
-## Environment
-
-**backend/.env**
-- `MONGODB_URI`
-- `JWT_SECRET`
-- `FRONTEND_URL=http://localhost:3000`
-- `PORT=5000`
-
-**frontend/.env.local**
-- `BACKEND_URL=http://localhost:5000`
-
-## Security
-
-Do not commit `.env` files. Rotate MongoDB passwords if they were ever shared publicly.

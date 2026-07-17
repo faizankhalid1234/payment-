@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, BadgeDollarSign, Eye, EyeOff, Loader2, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowRight, Eye, EyeOff, Loader2, ShieldCheck } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
+import { Logo } from "./Logo";
 
 type Mode = "login" | "register";
 
@@ -44,48 +45,29 @@ export function AuthForm() {
     <main className="min-h-screen p-4 sm:p-6 lg:p-8">
       <div className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-6xl items-center">
         <div className="grid w-full gap-6 lg:grid-cols-[1.05fr_0.95fr]">
-          <section className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-brand via-violet-500 to-fuchsia-500 p-8 text-white shadow-glow lg:p-10">
+          <section className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-teal-400 via-cyan-600 to-sky-700 p-8 text-white shadow-glow lg:p-10">
             <div className="absolute -right-16 -top-16 h-52 w-52 rounded-full bg-white/20 blur-2xl" />
-            <div className="absolute -bottom-20 left-16 h-64 w-64 rounded-full bg-emerald-300/20 blur-3xl" />
-            <div className="relative z-10 flex h-full min-h-[440px] flex-col justify-between">
-              <div>
-                <div className="mb-8 inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-sm font-semibold backdrop-blur">
-                  <Sparkles className="h-4 w-4" />
-                  Beautiful payment entry PWA
-                </div>
-                <h1 className="max-w-xl text-4xl font-black tracking-tight sm:text-5xl lg:text-6xl">
-                  Track every payment with a beautiful dashboard.
-                </h1>
-                <p className="mt-5 max-w-lg text-base leading-7 text-white/82">
-                  Income, expenses, source, category, date and exact time — all in one place.
-                  Install it on your phone and use it like a real app.
-                </p>
+            <div className="absolute -bottom-20 left-16 h-64 w-64 rounded-full bg-cyan-200/25 blur-3xl" />
+            <div className="relative z-10 flex h-full min-h-[440px] flex-col justify-center">
+              <div className="mb-7">
+                <Logo size={56} />
               </div>
-
-              <div className="grid gap-3 sm:grid-cols-3">
-                {[
-                  ["Income", "Where money came from"],
-                  ["Expense", "Where money was spent"],
-                  ["Timeline", "When the entry was made"],
-                ].map(([title, sub]) => (
-                  <div key={title} className="rounded-2xl bg-white/14 p-4 backdrop-blur">
-                    <p className="text-lg font-extrabold">{title}</p>
-                    <p className="mt-1 text-sm text-white/75">{sub}</p>
-                  </div>
-                ))}
-              </div>
+              <h1 className="max-w-xl text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl">
+                Clean money tracking with a fresh modern look.
+              </h1>
+              <p className="mt-5 max-w-lg text-base leading-7 text-white/85">
+                Login only works with your correct password. Every entry stays private to your account.
+              </p>
             </div>
           </section>
 
           <section className="card-panel p-5 sm:p-7 lg:p-8">
             <div className="mb-8 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="grid h-12 w-12 place-items-center rounded-2xl bg-brand-soft text-brand">
-                  <BadgeDollarSign className="h-7 w-7" />
-                </div>
+                <Logo size={44} />
                 <div>
-                  <h2 className="text-2xl font-black">PaisaBook</h2>
-                  <p className="text-sm text-muted">Payment Entry & Ledger</p>
+                  <h2 className="text-lg font-extrabold tracking-tight">Payment Ledger</h2>
+                  <p className="text-sm text-muted">Secure payment entry</p>
                 </div>
               </div>
               <ThemeToggle />
@@ -173,7 +155,7 @@ export function AuthForm() {
             <div className="mt-6 flex items-start gap-3 rounded-2xl bg-brand-soft/70 p-4 text-sm text-muted">
               <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-brand" />
               <p>
-                Your password is securely hashed and your session is saved in an HTTP-only cookie.
+                Correct password is required to login. Your entries are private — other users cannot see your data.
               </p>
             </div>
           </section>

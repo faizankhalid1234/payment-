@@ -1,31 +1,31 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --bg: 245 246 252;
+  --bg: 242 248 247;
   --surface: 255 255 255;
   --card: 255 255 255;
-  --border: 224 226 240;
-  --muted: 110 116 140;
-  --fg: 22 24 40;
-  --brand: 124 58 237;
-  --brand-soft: 237 233 254;
-  --income: 16 185 129;
-  --expense: 244 63 94;
+  --border: 206 226 222;
+  --muted: 90 118 114;
+  --fg: 18 42 40;
+  --brand: 15 148 136;
+  --brand-soft: 220 245 241;
+  --income: 16 163 127;
+  --expense: 225 74 90;
 }
 
 .dark {
-  --bg: 10 12 24;
-  --surface: 18 20 38;
-  --card: 24 27 48;
-  --border: 44 48 78;
-  --muted: 148 154 184;
-  --fg: 236 238 250;
-  --brand: 167 139 250;
-  --brand-soft: 42 33 84;
+  --bg: 10 22 24;
+  --surface: 16 34 36;
+  --card: 20 40 42;
+  --border: 38 68 70;
+  --muted: 148 178 174;
+  --fg: 232 246 244;
+  --brand: 45 212 191;
+  --brand-soft: 18 58 56;
   --income: 52 211 153;
   --expense: 251 113 133;
 }
@@ -41,12 +41,11 @@ html {
 body {
   background-color: rgb(var(--bg));
   color: rgb(var(--fg));
-  font-family: "Inter", system-ui, sans-serif;
+  font-family: "Plus Jakarta Sans", system-ui, sans-serif;
   min-height: 100vh;
   overflow-x: hidden;
 }
 
-/* Ambient gradient background */
 body::before {
   content: "";
   position: fixed;
@@ -54,9 +53,22 @@ body::before {
   z-index: -1;
   pointer-events: none;
   background:
-    radial-gradient(45rem 45rem at 12% -10%, rgb(var(--brand) / 0.14), transparent 60%),
-    radial-gradient(40rem 40rem at 100% 0%, rgb(var(--income) / 0.10), transparent 55%),
-    radial-gradient(45rem 45rem at 50% 120%, rgb(var(--expense) / 0.08), transparent 55%);
+    radial-gradient(40rem 40rem at 0% 0%, rgb(45 212 191 / 0.18), transparent 55%),
+    radial-gradient(36rem 36rem at 100% 0%, rgb(56 189 248 / 0.14), transparent 55%),
+    radial-gradient(42rem 42rem at 50% 100%, rgb(15 148 136 / 0.10), transparent 55%),
+    linear-gradient(180deg, rgb(245 252 251), rgb(236 247 245));
+}
+
+.dark body::before {
+  background:
+    radial-gradient(40rem 40rem at 0% 0%, rgb(45 212 191 / 0.16), transparent 55%),
+    radial-gradient(36rem 36rem at 100% 0%, rgb(14 116 144 / 0.18), transparent 55%),
+    radial-gradient(42rem 42rem at 50% 100%, rgb(15 118 110 / 0.14), transparent 55%),
+    linear-gradient(180deg, rgb(8 18 20), rgb(12 28 30));
+}
+
+.font-display {
+  font-family: "Plus Jakarta Sans", system-ui, sans-serif;
 }
 
 ::-webkit-scrollbar {
@@ -67,47 +79,40 @@ body::before {
   background: rgb(var(--border));
   border-radius: 999px;
 }
-::-webkit-scrollbar-thumb:hover {
-  background: rgb(var(--muted) / 0.6);
-}
 
 @layer components {
   .glass {
-    background: rgb(var(--card) / 0.72);
+    background: rgb(var(--card) / 0.82);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgb(var(--border) / 0.7);
+    border: 1px solid rgb(var(--border) / 0.8);
   }
 
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 active:scale-[0.97] disabled:opacity-60 disabled:pointer-events-none;
+    @apply inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 active:scale-[0.97] disabled:opacity-60 disabled:pointer-events-none;
   }
   .btn-brand {
     @apply btn text-white shadow-glow;
-    background-image: linear-gradient(135deg, rgb(var(--brand)), rgb(var(--brand) / 0.75));
+    background-image: linear-gradient(135deg, rgb(20 184 166), rgb(8 145 178));
   }
   .btn-brand:hover {
-    filter: brightness(1.08);
+    filter: brightness(1.06);
   }
   .btn-ghost {
-    @apply btn bg-surface/60 text-fg hover:bg-surface;
+    @apply btn bg-surface/70 text-fg hover:bg-surface;
     border: 1px solid rgb(var(--border));
   }
 
   .input {
-    @apply w-full rounded-xl bg-surface/70 px-4 py-2.5 text-sm text-fg outline-none transition-all placeholder:text-muted/70;
+    @apply w-full rounded-2xl bg-surface/85 px-4 py-3 text-sm text-fg outline-none transition-all placeholder:text-muted/70;
     border: 1px solid rgb(var(--border));
   }
   .input:focus {
     border-color: rgb(var(--brand));
-    box-shadow: 0 0 0 3px rgb(var(--brand) / 0.18);
+    box-shadow: 0 0 0 4px rgb(var(--brand) / 0.14);
   }
 
   .card-panel {
-    @apply glass rounded-xl2 shadow-soft;
-  }
-
-  .chip {
-    @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold;
+    @apply glass rounded-[1.4rem] shadow-soft;
   }
 }

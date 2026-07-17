@@ -28,27 +28,3 @@ export function toDatetimeLocal(d: Date = new Date()): string {
     d.getHours()
   )}:${pad(d.getMinutes())}`;
 }
-
-export const INCOME_CATEGORIES = [
-  "Salary",
-  "Business",
-  "Freelance",
-  "Gift",
-  "Investment",
-  "Loan Received",
-  "Other",
-];
-
-export const EXPENSE_CATEGORIES = [
-  "Food",
-  "Grocery",
-  "Rent",
-  "Bills",
-  "Transport",
-  "Shopping",
-  "Health",
-  "Education",
-  "Entertainment",
-  "Loan Given",
-  "Other",
-];

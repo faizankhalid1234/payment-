@@ -10,7 +10,7 @@ export default function OfflinePage() {
         </div>
         <h1 className="text-3xl font-black">You are offline</h1>
         <p className="mt-3 text-muted">
-          PaisaBook will sync again when you reconnect. Saved pages may still open.
+          Your payment ledger will sync again when you reconnect. Saved pages may still open.
         </p>
         <Link href="/" className="btn-brand mt-6">
           Try Dashboard
