@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Linkedin, Phone, Heart } from "lucide-react";
+import { ExternalLink, Phone, Heart } from "lucide-react";
 import { Logo } from "./Logo";
 
 export function Footer() {
@@ -73,7 +73,7 @@ export function Footer() {
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 hover:text-brand"
                 >
-                  <Linkedin className="h-4 w-4 shrink-0" />
+                  <ExternalLink className="h-4 w-4 shrink-0" />
                   linkedin.com/in/faizan-khalid-developerp
                 </a>
               </li>
