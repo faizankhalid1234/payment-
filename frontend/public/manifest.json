@@ -1,0 +1,29 @@
+{
+  "name": "PaisaBook — Payment Entry",
+  "short_name": "PaisaBook",
+  "description": "A beautiful income and expense ledger PWA.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0a0c18",
+  "theme_color": "#7c3aed",
+  "categories": ["finance", "productivity", "business"],
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "New Entry",
+      "short_name": "Entry",
+      "description": "Quickly add a payment entry",
+      "url": "/",
+      "icons": [{ "src": "/icons/icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+    }
+  ]
+}

@@ -1,0 +1,113 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: 245 246 252;
+  --surface: 255 255 255;
+  --card: 255 255 255;
+  --border: 224 226 240;
+  --muted: 110 116 140;
+  --fg: 22 24 40;
+  --brand: 124 58 237;
+  --brand-soft: 237 233 254;
+  --income: 16 185 129;
+  --expense: 244 63 94;
+}
+
+.dark {
+  --bg: 10 12 24;
+  --surface: 18 20 38;
+  --card: 24 27 48;
+  --border: 44 48 78;
+  --muted: 148 154 184;
+  --fg: 236 238 250;
+  --brand: 167 139 250;
+  --brand-soft: 42 33 84;
+  --income: 52 211 153;
+  --expense: 251 113 133;
+}
+
+* {
+  border-color: rgb(var(--border));
+}
+
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background-color: rgb(var(--bg));
+  color: rgb(var(--fg));
+  font-family: "Inter", system-ui, sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Ambient gradient background */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(45rem 45rem at 12% -10%, rgb(var(--brand) / 0.14), transparent 60%),
+    radial-gradient(40rem 40rem at 100% 0%, rgb(var(--income) / 0.10), transparent 55%),
+    radial-gradient(45rem 45rem at 50% 120%, rgb(var(--expense) / 0.08), transparent 55%);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgb(var(--border));
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--muted) / 0.6);
+}
+
+@layer components {
+  .glass {
+    background: rgb(var(--card) / 0.72);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgb(var(--border) / 0.7);
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 active:scale-[0.97] disabled:opacity-60 disabled:pointer-events-none;
+  }
+  .btn-brand {
+    @apply btn text-white shadow-glow;
+    background-image: linear-gradient(135deg, rgb(var(--brand)), rgb(var(--brand) / 0.75));
+  }
+  .btn-brand:hover {
+    filter: brightness(1.08);
+  }
+  .btn-ghost {
+    @apply btn bg-surface/60 text-fg hover:bg-surface;
+    border: 1px solid rgb(var(--border));
+  }
+
+  .input {
+    @apply w-full rounded-xl bg-surface/70 px-4 py-2.5 text-sm text-fg outline-none transition-all placeholder:text-muted/70;
+    border: 1px solid rgb(var(--border));
+  }
+  .input:focus {
+    border-color: rgb(var(--brand));
+    box-shadow: 0 0 0 3px rgb(var(--brand) / 0.18);
+  }
+
+  .card-panel {
+    @apply glass rounded-xl2 shadow-soft;
+  }
+
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold;
+  }
+}
